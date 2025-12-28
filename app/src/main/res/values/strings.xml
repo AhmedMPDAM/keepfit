@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">KeepFit</string>
+    <string name="login">Login</string>
+    <string name="register">Register</string>
+    <string name="dashboard">Dashboard</string>
+    <string name="water_tracker">Water Tracker</string>
+    <string name="weather">Weather</string>
+    <string name="nutrition">Nutrition</string>
+    <string name="bmi">BMI Calculator</string>
+    <string name="exercises">Exercises</string>
+    <string name="timer">Workout Timer</string>
+</resources>

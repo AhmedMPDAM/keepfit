@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">KeepFit</string>
+    <string name="login">Connexion</string>
+    <string name="register">S\'inscrire</string>
+    <string name="dashboard">Tableau de bord</string>
+    <string name="water_tracker">Suivi de l\'eau</string>
+    <string name="weather">Météo</string>
+    <string name="nutrition">Nutrition</string>
+    <string name="bmi">Calculateur IMC</string>
+    <string name="exercises">Exercices</string>
+    <string name="timer">Minuteur d\'entraînement</string>
+</resources>
