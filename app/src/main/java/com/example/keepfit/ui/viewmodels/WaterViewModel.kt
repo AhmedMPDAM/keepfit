@@ -16,7 +16,7 @@ class WaterViewModel(private val repository: WaterRepository) : ViewModel() {
 
     fun loadTodayWater(userId: Int) {
         viewModelScope.launch {
-            val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+            val today = getTodayDate()
             val intake = repository.getTodayIntake(userId, today)
             _waterAmount.value = intake?.amountMl ?: 0
         }
@@ -24,18 +24,31 @@ class WaterViewModel(private val repository: WaterRepository) : ViewModel() {
 
     fun addWater(userId: Int, amount: Int) {
         viewModelScope.launch {
-            val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-            val current = repository.getTodayIntake(userId, today)
+            val today = getTodayDate()
+            val existingIntake = repository.getTodayIntake(userId, today)
 
-            if (current != null) {
-                val updated = current.copy(amountMl = current.amountMl + amount)
-                repository.updateWater(updated)
-                _waterAmount.value = updated.amountMl
+            if (existingIntake != null) {
+                 updateExistingWater(existingIntake, amount)
             } else {
-                val newIntake = WaterIntake(0, userId, today, amount)
-                repository.addWater(newIntake)
-                _waterAmount.value = amount
+                 createNewWater(userId, today, amount)
             }
         }
+    } 
+
+    private suspend fun updateExistingWater(existing: WaterIntake, amount: Int) {
+        val newAmount = existing.amountMl + amount
+        val updated = existing.copy(amountMl = newAmount)
+        repository.updateWater(updated)
+        _waterAmount.value = newAmount
+    } 
+    private suspend fun createNewWater(userId: Int, date: String, amount: Int) {
+        val newIntake = WaterIntake(0, userId, date, amount)
+        repository.addWater(newIntake)
+        _waterAmount.value = amount
+    }
+ 
+    private fun getTodayDate(): String {
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        return dateFormat.format(Date())
     }
 }

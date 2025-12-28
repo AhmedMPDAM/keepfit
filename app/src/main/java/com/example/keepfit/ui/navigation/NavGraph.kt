@@ -1,6 +1,8 @@
 package com.example.keepfit.navigation
 
 import androidx.compose.runtime.*
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -18,34 +20,19 @@ fun NavGraph() {
     val context = LocalContext.current
     val app = context.applicationContext as FitnessApplication
 
-    val userRepo = UserRepository(app.database.userDao())
+     val userRepo = UserRepository(app.database.userDao())
     val waterRepo = WaterRepository(app.database.waterIntakeDao())
 
-    val authViewModel: AuthViewModel = viewModel(factory = object : androidx.lifecycle.ViewModelProvider.Factory {
-        override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
-            return AuthViewModel(userRepo) as T
-        }
-    })
-
-    val dashboardViewModel: DashboardViewModel = viewModel(factory = object : androidx.lifecycle.ViewModelProvider.Factory {
-        override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
-            return DashboardViewModel(userRepo) as T
-        }
-    })
-
-    val waterViewModel: WaterViewModel = viewModel(factory = object : androidx.lifecycle.ViewModelProvider.Factory {
-        override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
-            return WaterViewModel(waterRepo) as T
-        }
-    })
-
+     val authViewModel: AuthViewModel = viewModel(factory = simpleFactory { AuthViewModel(userRepo) })
+    val dashboardViewModel: DashboardViewModel = viewModel(factory = simpleFactory { DashboardViewModel(userRepo) })
+    val waterViewModel: WaterViewModel = viewModel(factory = simpleFactory { WaterViewModel(waterRepo) })
     val weatherViewModel: WeatherViewModel = viewModel()
     val timerViewModel: TimerViewModel = viewModel()
 
     val currentUser by authViewModel.currentUser.collectAsState()
     val userId = currentUser?.id ?: 0
 
-    NavHost(navController = navController, startDestination = "login") {
+     NavHost(navController = navController, startDestination = "login") {
         composable("login") {
             LoginScreen(
                 viewModel = authViewModel,
@@ -99,6 +86,15 @@ fun NavGraph() {
 
         composable("timer") {
             TimerScreen(viewModel = timerViewModel)
+        }
+    }
+}
+ 
+fun <T : ViewModel> simpleFactory(create: () -> T): ViewModelProvider.Factory {
+    return object : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <VM : ViewModel> create(modelClass: Class<VM>): VM {
+            return create() as VM
         }
     }
 }

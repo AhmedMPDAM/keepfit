@@ -15,7 +15,7 @@ class WeatherViewModel : ViewModel() {
     private val _suggestion = MutableStateFlow("")
     val suggestion: StateFlow<String> = _suggestion
 
-    fun fetchWeather(city: String = "London") {
+    fun fetchWeather(city: String = "Tunis") {
         viewModelScope.launch {
             try {
                 val response = api.getWeather(city, "486a5871a20d2546afeb50b1db1d904f")

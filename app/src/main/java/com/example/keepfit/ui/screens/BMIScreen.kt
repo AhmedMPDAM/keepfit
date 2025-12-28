@@ -18,18 +18,9 @@ fun BMIScreen(initialHeight: Double, initialWeight: Double) {
     var height by remember { mutableStateOf(initialHeight.toString()) }
     var weight by remember { mutableStateOf(initialWeight.toString()) }
 
-    val bmi = remember(height, weight) {
-        val h = height.toDoubleOrNull() ?: 0.0
-        val w = weight.toDoubleOrNull() ?: 0.0
-        if (h > 0) w / ((h / 100) * (h / 100)) else 0.0
-    }
-
-    val (category, categoryColor, emoji) = when {
-        bmi < 18.5 -> Triple("Underweight", Color(0xFF3498DB), "⚠️")
-        bmi < 25 -> Triple("Normal", SuccessGreen, "✅")
-        bmi < 30 -> Triple("Overweight", HydrationYellow, "⚡")
-        else -> Triple("Obese", HydrationRed, "🔴")
-    }
+     val bmi = calculateBMI(height, weight)
+    
+     val categoryInfo = getBMICategory(bmi)
 
     Box(
         modifier = Modifier
@@ -50,112 +41,157 @@ fun BMIScreen(initialHeight: Double, initialWeight: Double) {
             )
 
             Spacer(modifier = Modifier.height(32.dp))
-
-            // BMI Result Card
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = categoryColor.copy(alpha = 0.1f)
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(32.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(emoji, fontSize = 64.sp)
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Text(
-                        String.format("%.1f", bmi),
-                        style = MaterialTheme.typography.displayLarge,
-                        color = categoryColor,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    Text(
-                        category,
-                        style = MaterialTheme.typography.titleLarge,
-                        color = categoryColor,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-            }
+ 
+            BMIResultCard(bmi = bmi, categoryInfo = categoryInfo)
 
             Spacer(modifier = Modifier.height(32.dp))
-
-            // Input Fields
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-            ) {
-                Column(modifier = Modifier.padding(24.dp)) {
-                    Text(
-                        "Your Measurements",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = TextPrimary,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    OutlinedTextField(
-                        value = height,
-                        onValueChange = { height = it },
-                        label = { Text("Height (cm)") },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = FitnessPrimary,
-                            unfocusedBorderColor = TextLight
-                        )
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    OutlinedTextField(
-                        value = weight,
-                        onValueChange = { weight = it },
-                        label = { Text("Weight (kg)") },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = FitnessPrimary,
-                            unfocusedBorderColor = TextLight
-                        )
-                    )
-                }
-            }
+ 
+            BMIInputCard(
+                height = height,
+                weight = weight,
+                onHeightChange = { height = it },
+                onWeightChange = { weight = it }
+            )
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // BMI Scale Reference
-            Card(
+             BMIScaleCard()
+        }
+    }
+}
+ 
+fun calculateBMI(heightStr: String, weightStr: String): Double {
+    val height = heightStr.toDoubleOrNull() ?: 0.0
+    val weight = weightStr.toDoubleOrNull() ?: 0.0
+    
+    if (height > 0) {
+        val heightInMeters = height / 100
+        return weight / (heightInMeters * heightInMeters)
+    }
+    return 0.0
+}
+ 
+fun getBMICategory(bmi: Double): BMICategoryInfo {
+    return when {
+        bmi < 18.5 -> BMICategoryInfo("Underweight", Color(0xFF3498DB), "⚠️")
+        bmi < 25 -> BMICategoryInfo("Normal", SuccessGreen, "✅")
+        bmi < 30 -> BMICategoryInfo("Overweight", HydrationYellow, "⚡")
+        else -> BMICategoryInfo("Obese", HydrationRed, "🔴")
+    }
+}
+
+data class BMICategoryInfo(
+    val name: String,
+    val color: Color,
+    val emoji: String
+)
+
+@Composable
+fun BMIResultCard(bmi: Double, categoryInfo: BMICategoryInfo) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = categoryInfo.color.copy(alpha = 0.1f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(categoryInfo.emoji, fontSize = 64.sp)
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                String.format("%.1f", bmi),
+                style = MaterialTheme.typography.displayLarge,
+                color = categoryInfo.color,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                categoryInfo.name,
+                style = MaterialTheme.typography.titleLarge,
+                color = categoryInfo.color,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+    }
+}
+
+@Composable
+fun BMIInputCard(
+    height: String,
+    weight: String,
+    onHeightChange: (String) -> Unit,
+    onWeightChange: (String) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(modifier = Modifier.padding(24.dp)) {
+            Text(
+                "Your Measurements",
+                style = MaterialTheme.typography.titleLarge,
+                color = TextPrimary,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            OutlinedTextField(
+                value = height,
+                onValueChange = onHeightChange,
+                label = { Text("Height (cm)") },
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
-                Column(modifier = Modifier.padding(20.dp)) {
-                    Text(
-                        "BMI Scale",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = TextPrimary,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    BMIScaleItem("< 18.5", "Underweight", Color(0xFF3498DB))
-                    BMIScaleItem("18.5 - 24.9", "Normal", SuccessGreen)
-                    BMIScaleItem("25 - 29.9", "Overweight", HydrationYellow)
-                    BMIScaleItem("≥ 30", "Obese", HydrationRed)
-                }
-            }
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = FitnessPrimary,
+                    unfocusedBorderColor = TextLight
+                )
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            OutlinedTextField(
+                value = weight,
+                onValueChange = onWeightChange,
+                label = { Text("Weight (kg)") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = FitnessPrimary,
+                    unfocusedBorderColor = TextLight
+                )
+            )
+        }
+    }
+}
+
+@Composable
+fun BMIScaleCard() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Text(
+                "BMI Scale",
+                style = MaterialTheme.typography.titleMedium,
+                color = TextPrimary,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            BMIScaleItem("< 18.5", "Underweight", Color(0xFF3498DB))
+            BMIScaleItem("18.5 - 24.9", "Normal", SuccessGreen)
+            BMIScaleItem("25 - 29.9", "Overweight", HydrationYellow)
+            BMIScaleItem("≥ 30", "Obese", HydrationRed)
         }
     }
 }
